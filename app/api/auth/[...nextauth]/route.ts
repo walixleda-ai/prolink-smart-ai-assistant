@@ -1,23 +1,35 @@
 import NextAuth from "next-auth";
-import LinkedIn from "next-auth/providers/linkedin";
+import LinkedInProvider from "next-auth/providers/linkedin";
 
-const handler = NextAuth({
+export const authOptions = {
   providers: [
-    LinkedIn({
+    LinkedInProvider({
       clientId: process.env.LINKEDIN_CLIENT_ID!,
       clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          scope: "openid profile email w_member_social"
-        }
-      }
-    })
+    }),
   ],
+
+  session: {
+    strategy: "jwt",
+  },
+
   callbacks: {
-    async redirect({ url, baseUrl }) {
-      return baseUrl;
-    }
-  }
-});
+    async jwt({ token, account }) {
+      if (account?.access_token) {
+        token.accessToken = account.access_token;
+      }
+      return token;
+    },
+
+    async session({ session, token }) {
+      if (token?.accessToken) {
+        session.accessToken = token.accessToken;
+      }
+      return session;
+    },
+  },
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
