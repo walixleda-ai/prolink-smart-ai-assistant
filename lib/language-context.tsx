@@ -1,51 +1,42 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState } from 'react';
 
-type Lang = "en" | "ar";
+type Language = 'en' | 'ar';
 
-interface FontMap {
-  en: string;
-  ar: string;
+interface LanguageContextType {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  fonts: {
+    en: string;
+    ar: string;
+  };
 }
 
-interface LangContextType {
-  lang: Lang;
-  toggleLanguage: () => void;
-  fontClass: string;
-}
-
-const LanguageContext = createContext<LangContextType>({
-  lang: "en",
-  toggleLanguage: () => {},
-  fontClass: "",
-});
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({
   children,
   fonts,
 }: {
   children: React.ReactNode;
-  fonts: FontMap;
+  fonts: { en: string; ar: string };
 }) {
-  const [lang, setLang] = useState<Lang>("en");
-
-  const toggleLanguage = () => {
-    setLang((prev) => (prev === "en" ? "ar" : "en"));
-  };
+  const [language, setLanguage] = useState<Language>('en');
 
   return (
-    <LanguageContext.Provider
-      value={{
-        lang,
-        toggleLanguage,
-        fontClass: fonts[lang],
-      }}
-    >
-      {/* هنا ممكن تخليها div أو ترجع children مباشرة حسب احتياجك */}
-      <div className={fonts[lang]}>{children}</div>
+    <LanguageContext.Provider value={{ language, setLanguage, fonts }}>
+      {children}
     </LanguageContext.Provider>
   );
 }
 
-export const useLanguage = () => useContext(LanguageContext);
+export function useLanguageContext() {
+  const context = useContext(LanguageContext);
+
+  if (!context) {
+    throw new Error('useLanguageContext must be used inside LanguageProvider');
+  }
+
+  return context;
+}
