@@ -1,41 +1,51 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 
-interface LanguageContextType {
-  lang: "en" | "ar";
-  setLang: (lang: "en" | "ar") => void;
+type Lang = "en" | "ar";
+
+interface FontMap {
+  en: string;
+  ar: string;
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+interface LangContextType {
+  lang: Lang;
+  toggleLanguage: () => void;
+  fontClass: string;
+}
+
+const LanguageContext = createContext<LangContextType>({
+  lang: "en",
+  toggleLanguage: () => {},
+  fontClass: "",
+});
 
 export function LanguageProvider({
   children,
-  fontSelector,
+  fonts,
 }: {
   children: React.ReactNode;
-  fontSelector: (lang: string) => string;
+  fonts: FontMap;
 }) {
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const [lang, setLang] = useState<Lang>("en");
 
-  // Update direction + font automatically
-  useEffect(() => {
-    document.documentElement.lang = lang;
-    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
-
-    const fontClass = fontSelector(lang);
-    document.body.className = fontClass;
-  }, [lang, fontSelector]);
+  const toggleLanguage = () => {
+    setLang((prev) => (prev === "en" ? "ar" : "en"));
+  };
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang }}>
-      {children}
+    <LanguageContext.Provider
+      value={{
+        lang,
+        toggleLanguage,
+        fontClass: fonts[lang],
+      }}
+    >
+      {/* هنا ممكن تخليها div أو ترجع children مباشرة حسب احتياجك */}
+      <div className={fonts[lang]}>{children}</div>
     </LanguageContext.Provider>
   );
 }
 
-export function useLanguage() {
-  const ctx = useContext(LanguageContext);
-  if (!ctx) throw new Error("useLanguage must be used within LanguageProvider");
-  return ctx;
-}
+export const useLanguage = () => useContext(LanguageContext);
