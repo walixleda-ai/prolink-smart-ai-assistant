@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  linkedinId        String?  @unique
+  email             String?
+  name              String?
+  headline          String?
+  profilePicture    String?
+  linkedinAccessToken String? // Encrypted or stored securely
+  linkedinRefreshToken String?
+  tokenExpiresAt    DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  posts             Post[]
+  schedules         Schedule[]
+  settings          UserSettings?
+}
+
+model Post {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  content       String
+  language      String   // "ar" or "en"
+  topic         String?
+  tone          String?
+  targetRole    String?
+  industry      String?
+  
+  mediaUrl      String?  // URL to uploaded media
+  mediaPath     String?  // Local file path if stored temporarily
+  
+  status        String   @default("draft") // "draft", "scheduled", "published", "failed"
+  scheduledAt   DateTime?
+  publishedAt   DateTime?
+  linkedinPostId String? // LinkedIn post ID if published
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  schedules     Schedule[]
+}
+
+model Schedule {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId        String
+  post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  scheduledAt   DateTime
+  status       String   @default("PENDING") // "PENDING", "SENT", "FAILED"
+  withMedia    Boolean  @default(false)
+  mediaPath    String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model UserSettings {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  defaultLanguage   String   @default("en") // "ar" or "en"
+  defaultTone       String   @default("professional")
+  postingFrequency  Int      @default(3) // days
+  preferredIndustries String? // JSON array
+  preferredRoles    String?  // JSON array
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
